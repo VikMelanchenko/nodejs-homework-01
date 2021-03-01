@@ -1,6 +1,5 @@
 import path from 'path';
 import * as fs from 'fs/promises';
-import crypto from 'crypto'; //для генерации случайного ID
 
 import createDirname from './dirname.js';
 
@@ -52,22 +51,27 @@ async function removeContact(contactId) {
 // добавляет контакт
 async function addContact(name, email, phone) {
   try {
-    const data = await fs.readFile(contactsPath);
-    const contacts = JSON.parse(data.toString());
+    const data = await fs.readFile(contactsPath, 'utf-8');
+    const contacts = JSON.parse(data);
+    const id = contacts.length + 1;
     const newContact = {
-      id: crypto.randomBytes(2).toString('hex'),
+      id,
       name,
       email,
       phone,
     };
+
     if (!contactsPath) {
       return;
     }
-    await fs.writeFile(
-      contactsPath,
-      JSON.stringify(contacts.concat(newContact))
-    );
-    console.log(`Contact ${name} was added succesfully`);
+
+    contacts.push(newContact);
+    await fs.writeFile(contactsPath, JSON.stringify(contacts), (error) => {
+      if (error) {
+        return console.log(error);
+      }
+    });
+    console.log(`Contact with ID ${contactId} was added succesfully`);
     return newContact;
   } catch (error) {
     console.error(`Got an error trying to write to a file: ${error.message}`);
